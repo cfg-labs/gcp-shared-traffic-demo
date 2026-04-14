@@ -1,0 +1,30 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: food-web
+  namespace: cfg-demo
+spec:
+  parentRefs:
+  - name: cfg-lab-gw
+  hostnames:
+  - food-gw.cfg-lab.computingforgeeks.com
+  rules:
+  - backendRefs:
+    - name: food-web
+      port: 80
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: admin-web
+  namespace: cfg-demo
+spec:
+  parentRefs:
+  - name: cfg-lab-gw
+  hostnames:
+  - admin-gw.cfg-lab.computingforgeeks.com
+  rules:
+  - backendRefs:
+    - name: admin-web
+      port: 80
