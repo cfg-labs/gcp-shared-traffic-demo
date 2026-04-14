@@ -1,0 +1,35 @@
+name: terraform-policy
+
+on:
+  pull_request:
+    paths:
+    - 'infra/**'
+    - 'policy/**'
+
+jobs:
+  conftest:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install OpenTofu
+      uses: opentofu/setup-opentofu@v1
+      with:
+        tofu_version: 1.10.1
+
+    - name: Install Terragrunt
+      run: |
+        wget -q -O /usr/local/bin/terragrunt https://github.com/gruntwork-io/terragrunt/releases/download/v0.69.3/terragrunt_linux_amd64
+        chmod +x /usr/local/bin/terragrunt
+
+    - name: Terragrunt plan (JSON)
+      working-directory: infra/live/article-lab/europe-west1
+      run: |
+        terragrunt run-all plan -out=tfplan.binary --terragrunt-non-interactive
+        terragrunt run-all show -json tfplan.binary > tfplan.json
+
+    - name: Conftest policy check
+      uses: instrumenta/conftest-action@master
+      with:
+        files: infra/live/article-lab/europe-west1/tfplan.json
+        policy: policy/
