@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-sprawl
+  labels:
+    app: admin-sprawl
+    article: "01"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: admin-sprawl
+  template:
+    metadata:
+      labels:
+        app: admin-sprawl
+    spec:
+      containers:
+        - name: hello
+          image: us-docker.pkg.dev/google-samples/containers/gke/hello-app:2.0
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin-sprawl
+  labels:
+    app: admin-sprawl
+  annotations:
+    cloud.google.com/neg: '{"ingress": true}'
+spec:
+  type: NodePort
+  selector:
+    app: admin-sprawl
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+---
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: admin-sprawl-cert
+spec:
+  domains:
+    - admin-sprawl.cfg-lab.computingforgeeks.com
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: admin-sprawl
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "admin-sprawl-ip"
+    networking.gke.io/managed-certificates: "admin-sprawl-cert"
+    kubernetes.io/ingress.allow-http: "false"
+spec:
+  defaultBackend:
+    service:
+      name: admin-sprawl
+      port:
+        number: 80
